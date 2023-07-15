@@ -1,11 +1,16 @@
 # poe-openai-proxy
 
+![GitHub repo size](https://img.shields.io/github/repo-size/caoyunzhou/poe-openai-proxy)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/caoyunzhou/poe-openai-proxy/latest)
+![GitHub go.mod Go version (branch & subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/caoyunzhou/poe-openai-proxy/master)
+![Docker Pulls](https://img.shields.io/docker/pulls/caoyunzhou/poe-openai-proxy)
+[![GitHub Repo stars](https://img.shields.io/github/stars/caoyunzhou/poe-openai-proxy?style=social)](https://github.com/caoyunzhou/poe-openai-proxy/stargazers)
+
 - [Poe.com](https://poe.com/) 是一个免费的网页应用，让你可以和 GPT 模型聊天。`poe-api` 它反向工程了 `poe.com`，让它可以通过一个 HTTP API 来访问，这个 API 模仿了官方的 OpenAI API for ChatGPT，所以它可以和其他使用 OpenAI API for ChatGPT 的程序兼容。
 
 ## 声明：
 
 - 此项目只发布于 GitHub，基于 MIT 协议，免费且作为开源学习使用。并且不会有任何形式的卖号、付费服务、讨论群、讨论组等行为。谨防受骗。
-
 
 ## 安装
 
@@ -21,6 +26,7 @@ cd poe-openai-proxy/
 ```bash
 cp .env.example .env
 vim .env
+source .env
 ```
 
 3. 构建并启动Go后端：
@@ -50,13 +56,27 @@ chmod +x poe-openai-proxy
   -e PORT=8080 \
   -e AuthKey=sk-123456 \
   -e TOKENS=12zNTxAdieuXXszMWYt93g%3D%3D \
-  -e SIMULATE_ROLES=2 \
+  -e SIMULATE_ROLES=0 \
   -e RATE_LIMIT=10 \
-  -e COOL_DOWN=3 \
-  -e TIMEOUT=30 \
+  -e COOL_DOWN=10 \
+  -e TIMEOUT=60 \
   caoyunzhou/poe-openai-proxy
   ```
 
+- 配置多个POE-Token示例:
+  ```
+  docker run -d \
+  --name poe-openai-proxy \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  -e AuthKey=sk-123456 \
+  -e TOKENS="12zNTxAdieuXXszMWYt93g%3D%3D,13zNTxAdieuXXszMWYt93g%3D%3D,14zNTxAdieuXXszMWYt93g%3D%3D" \
+  -e SIMULATE_ROLES=0 \
+  -e RATE_LIMIT=10 \
+  -e COOL_DOWN=10 \
+  -e TIMEOUT=60 \
+  caoyunzhou/poe-openai-proxy
+  ```
 
 - docker-compose部署:
   ```
@@ -77,12 +97,12 @@ chmod +x poe-openai-proxy
 | 环境变量名称          | 必填                   | 备注                                                                                               |
 | --------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
 | `PORT`                | 必填        | 默认 `8080`
-| `AuthKey`             |    必填     |  默认:`sk-123456` , `适配openai的请求，用户自定义的秘钥` |
-| `TOKENS`              | 必填[list]  | poe-Token密钥                                        |
-| `SIMULATE_ROLES`      | `2`        | 角色                                                                       |
-| `RATE_LIMIT`          | `10`       |     速率[默认为1分钟内每个令牌调用10个api]    |
-| `COOL_DOWN`           |   `10`     | 冷却令牌[#冷却几秒钟。同一个令牌在n秒内不能多次使用] |
-| `TIMEOUT`             | `60`       |  超时  |
+| `AuthKey`             | 必填        | 默认:`sk-123456` , `适配openai的请求，用户自定义的秘钥，放在Authorization header里面做认证` |
+| `TOKENS`              | 必填[list]  | poe-Token密钥[token1,token2,token3]                                        |
+| `SIMULATE_ROLES`      | `0`        | 角色                                                                       |
+| `RATE_LIMIT`          | `10`       | 速率[默认为1分钟内每个令牌调用10个api]    |
+| `COOL_DOWN`           | `10`       | 冷却令牌[#冷却几秒钟。同一个令牌在n秒内不能多次使用] |
+| `TIMEOUT`             | `60`       | 超时  |
 
 > 注意: `Railway` 修改环境变量会重新 `Deploy`
 
@@ -92,6 +112,16 @@ chmod +x poe-openai-proxy
 
 只需要把你的代码里的`https://api.openai.com`替换成`http://localhost:8080`或者替换成你的域名`https://api.example.com`就可以了。
 
+## IP参考访问方式[127.0.0.1替换成你的IP]
+```
+curl --location 'http://127.0.0.1:8080/v1/chat/completions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer sk-123456' \
+--data '{
+  "model": "gpt-4",
+  "messages": [{"role": "user", "content": "你好"}]
+}'
+```
 
 ## 配置域名参考访问方式
 ```
@@ -112,18 +142,18 @@ curl --location 'https://poe.aivvm.com/v1/chat/completions' \
 - /v1/chat/completions
 
 支持的models对应列表:
-| 模型名称                  | poe模型名称   |
+| 模型名称                  | poe模型名称  |
 | ------------------------ | ---------- |
-| Sage                     | capybara   |
-| Claude-instant           | a2         |
-| Claude-2-100k            | a2_2       |
-| Claude-instant-100k      | a2_100k    |
+| sage                     | capybara   |
+| claude-instant           | a2         |
+| claude-2-100k            | a2_2       |
+| claude-instant-100k      | a2_100k    |
 | gpt-3.5-turbo-0613       | chinchilla |
 | gpt-3.5-turbo-16k-0613   | agouti     |
 | gpt-4                    | beaver     |
 | gpt-4-0613               | beaver     |
 | gpt-4-32k                | vizcacha   |
-| Google-PaLM              | acouchy    |
+| google-palm              | acouchy    |
 
 支持的参数：
 
@@ -152,3 +182,9 @@ curl --location 'https://poe.aivvm.com/v1/chat/completions' \
 <a href="https://github.com/caoyunzhou/poe-openai-proxy/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=caoyunzhou/poe-openai-proxy" />
 </a>
+
+
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=caoyunzhou/poe-openai-proxy&type=Date)](https://star-history.com/#caoyunzhou/poe-openai-proxy&Date)
